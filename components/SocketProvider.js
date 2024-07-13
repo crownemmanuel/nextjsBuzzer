@@ -8,10 +8,8 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     const socketInitializer = async () => {
-      await fetch("/api/socket");
-      const newSocket = io("", {
+      const newSocket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || "", {
         path: "/api/socket",
-        addTrailingSlash: false,
       });
       setSocket(newSocket);
     };

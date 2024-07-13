@@ -1,36 +1,37 @@
 import { Server } from "socket.io";
 
-let currentBuzzer = null;
+export const config = {
+  runtime: "edge",
+};
 
-const SocketHandler = (req, res) => {
-  if (res.socket.server.io) {
-    console.log("Socket is already running");
-    res.end();
-    return;
-  }
-
-  const io = new Server(res.socket.server, {
-    path: "/api/socket",
-    addTrailingSlash: false,
-  });
-  res.socket.server.io = io;
+const SocketHandler = async (req) => {
+  const io = new Server();
 
   io.on("connection", (socket) => {
-    socket.on("buzz", (team) => {
-      if (!currentBuzzer) {
-        currentBuzzer = team;
-        io.emit("buzzerPressed", team);
-      }
+    console.log("A client connected");
+
+    socket.on("buzz", async (team) => {
+      const response = await fetch(`${req.url}/state`, {
+        method: "POST",
+        body: JSON.stringify({ action: "buzz", team }),
+      });
+      const { currentBuzzer } = await response.json();
+      io.emit("buzzerPressed", currentBuzzer);
     });
 
-    socket.on("reset", () => {
-      currentBuzzer = null;
+    socket.on("reset", async () => {
+      await fetch(`${req.url}/state`, {
+        method: "POST",
+        body: JSON.stringify({ action: "reset" }),
+      });
       io.emit("buzzerReset");
     });
   });
 
-  console.log("Socket is initialized");
-  res.end();
+  return new Response(null, {
+    status: 101,
+    webSocket: io.engine.transport.ws,
+  });
 };
 
 export default SocketHandler;
