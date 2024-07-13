@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useState } from "react";
-import io from "socket.io-client";
+import { io } from "socket.io-client";
 
 export const SocketContext = createContext();
 
@@ -9,7 +9,10 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     const socketInitializer = async () => {
       await fetch("/api/socket");
-      const newSocket = io();
+      const newSocket = io("", {
+        path: "/api/socket",
+        addTrailingSlash: false,
+      });
       setSocket(newSocket);
     };
     socketInitializer();
