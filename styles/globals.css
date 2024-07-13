@@ -105,3 +105,40 @@ a {
     color-scheme: dark;
   }
 }
+h1 {
+  font-size: 15vw;
+}
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #000;
+  text-align: center;
+}
+
+.buzzer {
+  font-size: 3.5rem;
+  padding: 10px 20px;
+  cursor: pointer;
+  width: 100vw;
+  height: 100vh;
+  background: #9f0c0c;
+}
+
+button {
+  font-size: 1.5rem;
+  padding: 10px 20px;
+}
+input {
+  font-size: 1.2rem;
+  padding: 5px 10px;
+  margin-right: 10px;
+}
+h2 {
+  font-size: 3rem;
+  color: #fff;
+}
