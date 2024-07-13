@@ -5,9 +5,7 @@ export default function Control() {
   const socket = useContext(SocketContext);
 
   const handleReset = () => {
-    if (socket) {
-      socket.emit("reset");
-    }
+    sendMessage({ type: "reset" });
   };
 
   return (

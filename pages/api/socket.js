@@ -1,37 +1,51 @@
-import { Server } from "socket.io";
-
 export const config = {
   runtime: "edge",
 };
 
+const clients = new Set();
+
 const SocketHandler = async (req) => {
-  const io = new Server();
+  const { socket, response } = Deno.upgradeWebSocket(req);
 
-  io.on("connection", (socket) => {
-    console.log("A client connected");
+  socket.onopen = () => {
+    clients.add(socket);
+  };
 
-    socket.on("buzz", async (team) => {
-      const response = await fetch(`${req.url}/state`, {
-        method: "POST",
-        body: JSON.stringify({ action: "buzz", team }),
-      });
-      const { currentBuzzer } = await response.json();
-      io.emit("buzzerPressed", currentBuzzer);
-    });
+  socket.onclose = () => {
+    clients.delete(socket);
+  };
 
-    socket.on("reset", async () => {
-      await fetch(`${req.url}/state`, {
+  socket.onmessage = async (event) => {
+    const message = JSON.parse(event.data);
+
+    if (message.type === "buzz") {
+      const stateResponse = await fetch(
+        `${req.url.split("/api/socket")[0]}/api/state`,
+        {
+          method: "POST",
+          body: JSON.stringify({ action: "buzz", team: message.team }),
+        }
+      );
+      const { currentBuzzer } = await stateResponse.json();
+
+      for (const client of clients) {
+        client.send(
+          JSON.stringify({ type: "buzzerPressed", team: currentBuzzer })
+        );
+      }
+    } else if (message.type === "reset") {
+      await fetch(`${req.url.split("/api/socket")[0]}/api/state`, {
         method: "POST",
         body: JSON.stringify({ action: "reset" }),
       });
-      io.emit("buzzerReset");
-    });
-  });
 
-  return new Response(null, {
-    status: 101,
-    webSocket: io.engine.transport.ws,
-  });
+      for (const client of clients) {
+        client.send(JSON.stringify({ type: "buzzerReset" }));
+      }
+    }
+  };
+
+  return response;
 };
 
 export default SocketHandler;

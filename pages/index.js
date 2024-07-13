@@ -26,13 +26,10 @@ export default function Buzzer() {
   };
 
   const handleBuzz = () => {
-    if (socket) {
-      socket.emit("buzz", teamName);
-
-      // Play buzzer sound
-      if (audio) {
-        audio.play().catch((error) => console.log("Audio play failed:", error));
-      }
+    sendMessage({ type: "buzz", team: teamName });
+    // Play buzzer sound
+    if (audio) {
+      audio.play().catch((error) => console.log("Audio play failed:", error));
     }
   };
 
