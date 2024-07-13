@@ -2,10 +2,10 @@ import { useContext } from "react";
 import { SocketContext } from "../components/SocketProvider";
 
 export default function Control() {
-  const socket = useContext(SocketContext);
+  const { sendMessage } = useContext(SocketContext);
 
   const handleReset = () => {
-    sendMessage({ type: "reset" });
+    sendMessage("reset", {});
   };
 
   return (

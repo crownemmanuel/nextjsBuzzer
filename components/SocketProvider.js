@@ -1,56 +1,44 @@
-import React, { createContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useEffect, useState } from "react";
+import Pusher from "pusher-js";
 
 export const SocketContext = createContext();
 
 export const SocketProvider = ({ children }) => {
-  const [socket, setSocket] = useState(null);
-
-  const sendMessage = useCallback(
-    (message) => {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(message));
-      }
-    },
-    [socket]
-  );
+  const [pusher, setPusher] = useState(null);
+  const [channel, setChannel] = useState(null);
 
   useEffect(() => {
-    const wsUrl = `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${
-      window.location.host
-    }/api/socket`;
-    const newSocket = new WebSocket(wsUrl);
+    const pusherInstance = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+    });
 
-    newSocket.onopen = () => {
-      console.log("WebSocket connected");
-      setSocket(newSocket);
-    };
+    const channel = pusherInstance.subscribe("buzzer-channel");
 
-    newSocket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === "buzzerPressed") {
-        // Handle buzzer pressed
-        console.log("Buzzer pressed by:", message.team);
-      } else if (message.type === "buzzerReset") {
-        // Handle buzzer reset
-        console.log("Buzzer reset");
-      }
-    };
-
-    newSocket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    newSocket.onclose = () => {
-      console.log("WebSocket disconnected");
-    };
+    setPusher(pusherInstance);
+    setChannel(channel);
 
     return () => {
-      if (newSocket) newSocket.close();
+      if (pusherInstance) {
+        pusherInstance.unsubscribe("buzzer-channel");
+        pusherInstance.disconnect();
+      }
     };
   }, []);
 
+  const sendMessage = (eventName, data) => {
+    if (channel) {
+      fetch("/api/pusher", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ event: eventName, data }),
+      });
+    }
+  };
+
   return (
-    <SocketContext.Provider value={{ socket, sendMessage }}>
+    <SocketContext.Provider value={{ pusher, channel, sendMessage }}>
       {children}
     </SocketContext.Provider>
   );

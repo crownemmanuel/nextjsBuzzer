@@ -1,11 +1,10 @@
-import { useState, useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { SocketContext } from "../components/SocketProvider";
 
 export default function Buzzer() {
   const [teamName, setTeamName] = useState("");
   const [isRegistered, setIsRegistered] = useState(false);
-  const [audio, setAudio] = useState(null);
-  const socket = useContext(SocketContext);
+  const { channel, sendMessage } = useContext(SocketContext);
 
   useEffect(() => {
     const storedTeam = localStorage.getItem("teamName");
@@ -13,9 +12,6 @@ export default function Buzzer() {
       setTeamName(storedTeam);
       setIsRegistered(true);
     }
-
-    // Initialize audio
-    setAudio(new Audio("/buzzer.mp3"));
   }, []);
 
   const handleRegister = () => {
@@ -26,11 +22,7 @@ export default function Buzzer() {
   };
 
   const handleBuzz = () => {
-    sendMessage({ type: "buzz", team: teamName });
-    // Play buzzer sound
-    if (audio) {
-      audio.play().catch((error) => console.log("Audio play failed:", error));
-    }
+    sendMessage("buzz", { team: teamName });
   };
 
   if (!isRegistered) {
